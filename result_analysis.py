@@ -1,8 +1,17 @@
 import os
 import pickle
+
+import numpy as np
 import pandas as pd
+import scipy.stats
 import seaborn as sns
 import matplotlib.pyplot as plt
+import rpy2.robjects as robjects
+r = robjects.r
+r.library('effsize')
+r['source']('A12.R')
+test = robjects.globalenv['A12']
+
 
 if __name__ == '__main__':
 
@@ -42,21 +51,28 @@ if __name__ == '__main__':
     data["fitness"] = fitness
     data["iteration"] = iteration
 
-    sns.boxplot(data=data,x="noise",y="fitness",hue="type")
-    plt.show()
+    #sns.boxplot(data=data,x="noise",y="fitness",hue="type")
+    #plt.show()
     groups = data.groupby(["noise","type"])
     groups.describe()[["fitness"]].T.to_csv("fitness.csv")
 
+    noises = np.unique(data["noise"])
+    pvalues = []
+    effectsizes = []
+    magnitudes = []
+    for noise in noises:
+        fitness_gp = data[(data["noise"]==noise) & (data["type"]=="GP")]["fitness"].values
+        fitness_rp = data[(data["noise"] == noise) & (data["type"] == "RP")]["fitness"].values
+        st = scipy.stats.mannwhitneyu(fitness_gp,fitness_rp)
+        pvalue = np.round(st.pvalue,4)
+        df_result_r = test(robjects.FloatVector(fitness_gp),
+                           robjects.FloatVector(fitness_rp))
 
+        mag = str(df_result_r[2]).split("\n")[0].split()[-1]
+        oeffect = float(str(df_result_r[3]).split()[-1])
+        pvalues.append(pvalue)
+        magnitudes.append(mag)
+        effectsizes.append(oeffect)
 
-    #
-    # with open("results/result_11.pkl_GP.pkl","rb") as file:
-    #     data = pickle.load(file)
-    #
-    # print(data[0])
-    # print([x.fitness for x in data])
-    #
-    # with open("results/result_11.pkl_RP.pkl","rb") as file:
-    #     data = pickle.load(file)
-    #
-    # print(data)
+    statistics = pd.DataFrame({"noise":noises,"pvalue":pvalues,"effectsize":effectsizes, "magnitude":magnitudes})
+    statistics.to_csv("statistics.csv",index=False)
