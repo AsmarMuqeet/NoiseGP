@@ -1,4 +1,4 @@
-# ssbse submission
+# Approximating Stochastic Quantum Noise through Genetic Programming
 
 ## Installation:
 1. Clone the repository
