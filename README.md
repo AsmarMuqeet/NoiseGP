@@ -1,4 +1,5 @@
 # Approximating Stochastic Quantum Noise through Genetic Programming
+[![DOI](https://zenodo.org/badge/783293772.svg)](https://zenodo.org/doi/10.5281/zenodo.11198787)
 
 ## Installation:
 1. Clone the repository
